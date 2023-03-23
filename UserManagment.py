@@ -44,10 +44,13 @@ def add_passwd():
 def add_email():
     while True:
         email = input("Insert your mail address > ")
-        if "@" not in email or ".com" not in email:
-            print("Invalid email address format. Must contain '@' and '.com'")
+        if email.endswith(".com") or email.endswith(".co.il"):
+            if "@" in email:
+                return email
+            else:
+                print("Invalid email address format. Must contain '@'")
         else:
-            return email
+            print("Invalid email address format. Must end with '.com' or '.co.il' ")
 
 
 # This function receives the gender of the user | It validates it is either "male" or "female".
