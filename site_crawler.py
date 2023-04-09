@@ -3,13 +3,15 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
+
 # Define the main crawling function
 def crawler(url2, visited=None):
     # Initialize visited list if not provided
     if visited is None:
         visited = []
 
-    # If the URL is not visited, add it to the visited list
+    # If the URL was not already visited, add it to the visited list and continue the process
+    # This prevents an infinite loop by avoiding re-running the crawler on a link that has been used before
     if url2 not in visited:
         visited.append(url2)
 
@@ -34,8 +36,8 @@ def crawler(url2, visited=None):
                     # If the link starts with the base URL, add it to the list
                     elif link['href'].startswith(url2):
                         addresses.append(link['href'])
-                    # If the link is short, join it with the base URL and add it to the list
-                    elif len(link['href']) < 12:
+                    # If the link does not contain a full URL, join it with the base URL and add it to the list
+                    elif "http" not in link['href']:
                         full_url = urljoin(url2, link['href'])
                         addresses.append(full_url)
                     else:
@@ -76,9 +78,10 @@ def crawler(url2, visited=None):
                         print(f"Too many redirects for {addr}. Skipping.")
                         print()
         except:
-            # If no links were found, print the information
+            # If no links were found, print the following sentence
             print("No links were found under address: ", url2)
             print()
+
 
 # Main function for the main site
 def main_site(url):
@@ -110,9 +113,11 @@ def main_site(url):
 
             # Call the crawler function for the main site
             crawler(url)
-    except:
+    except Exception as e:
         # If there is an error, print it
-        print("error")
+        print("Error:")
+        print(e)
 
-# Call the main_site function with the target URL
+
+# Call the main_site function with the target URL - Insert any full URL you desire
 main_site("https://attackit.co.il/")
