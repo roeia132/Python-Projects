@@ -87,4 +87,4 @@ def main_site(url):
         print("error")
 
 
-main_site("https:// INSERT A URL .com/")
+main_site("https://attackit.co.il/")
