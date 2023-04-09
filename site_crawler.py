@@ -15,24 +15,21 @@ def crawler(url2, visited=None):
         site = requests.get(url2).text
         soup = BeautifulSoup(site, 'lxml')
         soup = soup.body
-        domain = url2.split('/')[2]
 
         try:
             links = soup.find_all('a')
+            check = soup.find_all('a')
             for link in links:
-
-                if 'href' not in link.attrs:
-                    continue
-
-                if '#' in link['href'] or re.fullmatch(url2, link['href']):
-                    pass
-                elif domain in link['href']:
-                    addresses.append(link['href'])
-                elif re.search(r'http.+', link['href']):
-                    pass
-                else:
-                    full_url = urljoin(url2, link['href'])
-                    addresses.append(full_url)
+                if 'href' in link.attrs:
+                    if '#' in link['href'] or url2 == link['href']:
+                        pass
+                    elif link['href'].startswith(url2):
+                        addresses.append(link['href'])
+                    elif len(link['href']) < 12 :
+                        full_url = urljoin(url2, link['href'])
+                        addresses.append(full_url)
+                    else:
+                        pass
 
             for addr in addresses:
                 if addr not in visited and addr.startswith('https://'):
@@ -86,9 +83,8 @@ def main_site(url):
                 print("No links were found")
                 print()
             crawler(url)
-    except requests.exceptions.TooManyRedirects:
-        print(f"Too many redirects for {url}. Skipping.")
-        print()
+    except:
+        print("error")
 
 
-main_site("https://attackit.co.il")
+main_site("https:// INSERT A URL .com/")
