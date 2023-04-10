@@ -1,11 +1,15 @@
-import re
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
+recursive_counter = 1
+address_counter = 1
+
 
 # Define the main crawling function
 def crawler(url2, visited=None):
+    global recursive_counter, address_counter
+    recursive_counter += 1
     # Initialize visited list if not provided
     if visited is None:
         visited = []
@@ -38,8 +42,8 @@ def crawler(url2, visited=None):
                         addresses.append(link['href'])
                     # If the link does not contain a full URL, join it with the base URL and add it to the list
                     elif "http" not in link['href']:
-                        full_url = urljoin(url2, link['href'])
-                        addresses.append(full_url)
+                        link = urljoin(url2, link['href'])
+                        addresses.append(link)
                     else:
                         pass
 
@@ -55,7 +59,8 @@ def crawler(url2, visited=None):
 
                         # If the subpage is accessible, print its information
                         if sub_status == 200:
-                            print("For Sub address - ", addr)
+                            address_counter += 1
+                            print(address_counter, "For Sub address - ", addr)
                             print("characters: ", len(sub_html))
                             try:
                                 # Find all forms with a post method and print their count
@@ -94,7 +99,7 @@ def main_site(url):
 
         # If the main page is accessible, print its information
         if main_status == 200:
-            print("For Address: ", url)
+            print(recursive_counter, "For Address: ", url)
             print("characters: ", len(main_html))
             try:
                 # Find all forms with a post method and print their count
@@ -121,3 +126,5 @@ def main_site(url):
 
 # Call the main_site function with the target URL - Insert any full URL you desire
 main_site("https://attackit.co.il/")
+print()
+print(f"The Recursive counter has been used {recursive_counter} times")
