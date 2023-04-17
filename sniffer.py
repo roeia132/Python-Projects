@@ -40,6 +40,9 @@ def main():
 
 
 def is_admin():
+    """
+    Check if the script is running with high privileges (as an administrator or root user).
+    """
     if platform.system() == "Windows":
         try:
             is_admin = os.getuid() == 0
@@ -49,6 +52,7 @@ def is_admin():
         is_admin = os.geteuid() == 0
 
     return is_admin
+
 
 
 def create_socket(protocol, local_ip):
