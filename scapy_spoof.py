@@ -1,6 +1,45 @@
-ARP
-IP
-ICMP
+ARP - Request
+
+# Define the target IP address for the ARP request
+target_ip = '192.168.1.1'
+# Construct an ARP request packet using the necessary layers and fields in Scapy
+arp_request_pkt = Ether(dst='ff:ff:ff:ff:ff:ff')/ARP(op=1, pdst=target_ip)
+# Send the ARP request packet and receive the ARP reply packet
+arp_reply_pkt = srp1(arp_request_pkt, timeout=2)
+# Print the ARP reply packet
+print(arp_reply_pkt.show())
+
+ARP - Reply - Manual
+
+# Define the source and destination MAC addresses and IP addresses for the ARP reply
+sender_mac = '00:11:22:33:44:55'
+sender_ip = '192.168.1.100'
+target_mac = 'aa:bb:cc:dd:ee:ff'
+target_ip = '192.168.1.1'
+# Construct an ARP reply packet using the necessary layers and fields in Scapy
+arp_reply_pkt = Ether(dst=target_mac)/ARP(op=2, hwsrc=sender_mac, psrc=sender_ip, hwdst=target_mac, pdst=target_ip)
+# Send the ARP reply packet using the sendp() function in Scapy
+sendp(arp_reply_pkt, iface=conf.iface)
+
+ARP - Reply - Sniff Response
+
+def arp_reply(pkt):
+    # Check if the packet is an ARP request packet
+    if ARP in pkt and pkt[ARP].op == 1:
+        # Extract the source MAC and IP addresses from the ARP request packet
+        src_mac = pkt[ARP].hwsrc
+        src_ip = pkt[ARP].psrc
+        # Define the destination MAC and IP addresses for the ARP reply packet
+        dst_mac = pkt[ARP].hwdst
+        dst_ip = pkt[ARP].pdst
+        # Construct an ARP reply packet with the appropriate MAC and IP addresses
+        arp_reply_pkt = Ether(src=get_if_hwaddr(conf.iface), dst=src_mac)/ARP(op=2, hwsrc=get_if_hwaddr(conf.iface), psrc=dst_ip, hwdst=src_mac, pdst=src_ip)
+        # Send the ARP reply packet using the sendp() function in Scapy
+        sendp(arp_reply_pkt, iface=conf.iface)
+# Use Scapy's sniff() function to capture ARP packets on the network and call the arp_reply() function in response to ARP request packets - Infinite
+sniff(filter="arp", prn=arp_reply)
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 DHCP - Request
 
@@ -74,5 +113,59 @@ def dhcp_ack(pkt):
 # Use Scapy's sniff() function to capture DHCP packets on the network and call the dhcp_ack() function in response to DHCP Request packets
 sniff(filter="udp and (port 67 or port 68)", prn=dhcp_ack)
 
-DNS
-HTTP
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+DNS - Query
+
+def dns_query():
+    # Define the DNS query name and server IP address
+    dns_name = 'www.google.com'
+    dns_server_ip = '8.8.8.8'
+    # Construct a DNS query packet using Scapy
+    dns_query_pkt = IP(dst=dns_server_ip)/UDP(dport=53)/DNS(rd=1, qd=DNSQR(qname=dns_name))
+    # Send the DNS query packet using Scapy's sr1() function and print the response
+    dns_response_pkt = sr1(dns_query_pkt)
+    print(dns_response_pkt.show())
+
+DNS - Response
+
+def dns_response():
+    # Define the DNS response data and client IP address
+    dns_response_data = '192.168.1.1'
+    dns_client_ip = '192.168.1.100'
+    # Construct a DNS response packet using Scapy
+    dns_response_pkt = IP(dst=dns_client_ip)/UDP(dport=53)/DNS(rd=1, qd=DNSQR(qname='www.google.com'), an=DNSRR(rrname='www.google.com', rdata=dns_response_data))
+    # Send the DNS response packet using Scapy's send() function
+    send(dns_response_pkt)
+
+DNS - Cache Poisoning
+
+def dns_cachePoisoning():
+    # Define the DNS response data and client IP address
+    dns_response_data = '192.168.1.2'
+    dns_client_ip = '192.168.1.100'
+    # Construct a DNS response packet with a spoofed source IP address
+    dns_response_pkt = IP(src='10.0.0.1', dst=dns_client_ip)/UDP(dport=53)/DNS(rd=1, qd=DNSQR(qname='www.google.com'), an=DNSRR(rrname='www.google.com', rdata=dns_response_data))
+    # Send the DNS response packet using Scapy's send() function
+    send(dns_response_pkt)
+    
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+HTTP - Sniffing
+
+# Define a function to process HTTP packets
+def process_http_packet(packet):
+    # Check if the packet has an HTTP request layer
+    if packet.haslayer(HTTPRequest):
+        # Extract the HTTP method, URL path, and host from the packet
+        method = packet[HTTPRequest].Method.decode()
+        url = packet[HTTPRequest].Host.decode() + packet[HTTPRequest].Path.decode()
+        # Print the HTTP method and URL using an f-string
+        print(f'{method} {url}')
+
+
+# Use Scapy's sniff function to capture HTTP packets on port 80 and call the process_http_packet function for each packet
+sniff(filter='tcp port 80', prn=process_http_packet)
+
+
+
